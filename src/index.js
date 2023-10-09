@@ -1,40 +1,85 @@
 import * as itowns from 'itowns';
 import * as THREE from 'three';
+import GUI from 'lil-gui';
 
-// Get our `<div id="viewerId">` element. A canvas will be appended to this
-// element when instanting a itowns' `View`.
+import { PointCloudGUI } from './debug/PointCloudGui.js';
+
+let layer; // COPCLayer
+
+const uri = new URL(location);
+
+const gui = new GUI();
+
 const viewerDiv = document.getElementById('viewerDiv');
+const view = new itowns.View('EPSG:4326', viewerDiv);
+const controls = new itowns.PlanarControls(view);
+view.mainLoop.gfxEngine.renderer.setClearColor(0xdddddd);
 
-// Define an initial camera position
-const placement = {
-    coord: new itowns.Coordinates('EPSG:4326', 2.351323, 48.856712),
-    range: 25000000,
-};
+function onLayerReady(layer) {
+    const camera = view.camera.camera3D;
 
-// Create an empty globe View
-const view = new itowns.GlobeView(viewerDiv, placement);
+    const lookAt = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    layer.root.bbox.getSize(size);
+    layer.root.bbox.getCenter(lookAt);
 
-// Declare your source configuration, in this case the WMTS parameters of your
-// requested resources.
-const orthoConfig = {
-    'url': 'https://wxs.ign.fr/decouverte/geoportail/wmts',
-    'crs': 'EPSG:3857',
-    'format': 'image/jpeg',
-    'name': 'ORTHOIMAGERY.ORTHOPHOTOS',
-    'tileMatrixSet': 'PM',
-};
+    camera.far = 2.0 * size.length();
 
-// Instantiate the WMTS source of your layer
-const imagerySource = new itowns.WMTSSource(orthoConfig);
+    controls.groundLevel = layer.root.bbox.min.z;
+    const position = layer.root.bbox.min.clone().add(
+        size.multiply({ x: 1, y: 1, z: size.x / size.z }),
+    );
 
-// Create your imagery layer
-const imageryLayer = new itowns.ColorLayer('imagery', {
-    source: imagerySource,
-});
+    camera.position.copy(position);
+    camera.lookAt(lookAt);
+    camera.updateProjectionMatrix();
 
-// Add it to source view!
-view.addLayer(imageryLayer);
+    view.notifyChange(camera);
+}
 
-// TODO: Use THREE module (maybe traveling with camera)
-const todo = THREE.Object3D.DEFAULT_UP;
-console.log(todo);
+
+// function readURL() {
+//     const url = document.getElementById('url').value;
+// 
+//     if (url) {
+//         setUrl(url);
+//     }
+// }
+
+function setUrl(url) {
+    if (!url) return;
+
+    // const input_url = document.getElementById('url');
+    // if (!input_url) return;
+
+    uri.searchParams.set('copc', url);
+    history.replaceState(null, null, `?${uri.searchParams.toString()}`);
+
+    // input_url.value = url;
+    load(url);
+}
+
+
+function load(url) {
+    const source = new itowns.CopcSource({ url });
+
+    console.log('test');
+    if (layer) {
+        // gui.removeFolder(layer.debugUI);
+        view.removeLayer('COPC');
+        view.notifyChange();
+        layer.delete();
+    }
+
+    layer = new itowns.CopcLayer('COPC', {
+        source,
+        crs: view.referenceCrs,
+        sseThreshold: 2,
+        pointBudget: 3000000,
+    });
+    view.addLayer(layer).then(onLayerReady);
+    new PointCloudGUI(view, layer, { parent: gui } );
+    // debug.PotreeDebug.initTools(view, layer, gui);
+}
+
+setUrl(uri.searchParams.get('copc'));

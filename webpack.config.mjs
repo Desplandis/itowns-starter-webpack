@@ -24,9 +24,6 @@ export default (env, options) => {
             ],
         },
         resolve: {
-            alias: {
-                three: path.resolve(__dirname, 'node_modules/three/build/three.module.js'),
-            },
         },
         plugins: [],
         devServer: {

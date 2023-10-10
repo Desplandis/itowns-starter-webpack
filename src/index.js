@@ -2,7 +2,11 @@ import * as itowns from 'itowns';
 import * as THREE from 'three';
 import GUI from 'lil-gui';
 
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+// import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { PointCloudGUI } from './debug/PointCloudGui.js';
+import { EDLPass } from './postprocessing/EDLPass.js';
 
 let layer; // COPCLayer
 
@@ -14,6 +18,28 @@ const viewerDiv = document.getElementById('viewerDiv');
 const view = new itowns.View('EPSG:4326', viewerDiv);
 const controls = new itowns.PlanarControls(view);
 view.mainLoop.gfxEngine.renderer.setClearColor(0xdddddd);
+
+const composer = new EffectComposer(
+    view.mainLoop.gfxEngine.renderer,
+    view.mainLoop.gfxEngine.fullSizeRenderTarget,
+);
+
+const renderPass = new RenderPass(view.scene, view.camera.camera3D);
+composer.addPass(renderPass);
+// const outputPass = new OutputPass(view.scene, view.camera.camera3D, view.camera.width, view.camera.height);
+// composer.addPass(outputPass);
+const edlPass = new EDLPass(
+    view.scene,
+    view.camera.camera3D,
+    view.camera.width,
+    view.camera.height,
+);
+composer.addPass(edlPass);
+
+view.render = function render() {
+    composer.render();
+};
+// TODO: view.resize with composer + edlPass
 
 function onLayerReady(layer) {
     const camera = view.camera.camera3D;
@@ -63,7 +89,6 @@ function setUrl(url) {
 function load(url) {
     const source = new itowns.CopcSource({ url });
 
-    console.log('test');
     if (layer) {
         // gui.removeFolder(layer.debugUI);
         view.removeLayer('COPC');
@@ -74,12 +99,15 @@ function load(url) {
     layer = new itowns.CopcLayer('COPC', {
         source,
         crs: view.referenceCrs,
-        sseThreshold: 2,
+        sseThreshold: 1,
         pointBudget: 3000000,
+        material: {
+            maxAttenuatedSize: 7,
+            shape: itowns.PNTS_SHAPE.SQUARE,
+        },
     });
     view.addLayer(layer).then(onLayerReady);
     new PointCloudGUI(view, layer, { parent: gui } );
-    // debug.PotreeDebug.initTools(view, layer, gui);
 }
 
 setUrl(uri.searchParams.get('copc'));

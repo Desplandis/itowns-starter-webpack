@@ -1,4 +1,4 @@
-import { PNTS_MODE, PNTS_SIZE_MODE } from 'itowns';
+import { PNTS_MODE, PNTS_SHAPE, PNTS_SIZE_MODE } from 'itowns';
 import GUI from 'lil-gui';
 
 export class PointCloudGUI extends GUI {
@@ -31,6 +31,9 @@ export class PointCloudGUI extends GUI {
 
         pointUI.add(layer.material, 'sizeMode', PNTS_SIZE_MODE)
             .name('Mode')
+            .onChange(update);
+        pointUI.add(layer.material, 'shape', PNTS_SHAPE)
+            .name('Shape')
             .onChange(update);
         addPointSize(layer, 'pointSize', 'Size');
         addPointSize(layer.material, 'minAttenuatedSize', 'Min size');

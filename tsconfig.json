@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "strict": true,
+        "noImplicitReturns": true,
+        "noImplicitAny": true,
+        "module": "es2022",
+        "moduleResolution": "node",
+        "target": "es6",
+        "allowJs": true
+    },
+    "include": [
+        "./src/**.*"
+    ],
+    "exclude": [
+        "dist"
+    ]
+}

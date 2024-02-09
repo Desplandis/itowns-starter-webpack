@@ -2,7 +2,7 @@ import * as itowns from 'itowns';
 
 // Get our `<div id="viewerId">` element. When creating a `View`, a canvas will
 // be appended to this element.
-const viewerDiv = document.getElementById('viewerDiv');
+const viewerDiv = document.getElementById('viewerDiv') as HTMLDivElement;
 
 // Define an initial camera position
 const placement = {

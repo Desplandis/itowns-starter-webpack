@@ -17,7 +17,7 @@ const config = (env) => {
     return {
         mode: env.production ? 'production' : 'development',
         entry: {
-            main: './src/index.js',
+            main: './src/index.ts',
         },
         module: {
             rules: [

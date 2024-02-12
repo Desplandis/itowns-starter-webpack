@@ -3,6 +3,8 @@ import { Vector3 } from 'three';
 import { View, PlanarControls, CopcSource, CopcLayer, PNTS_SHAPE } from 'itowns';
 import GUI from 'lil-gui';
 
+import { PointCloudGUI } from './debug/PointCloudGUI';
+
 import type { PerspectiveCamera } from 'three';
 import type { PointCloudLayer } from 'itowns';
 
@@ -74,15 +76,19 @@ function load(url: string) {
         source,
         crs: view.referenceCrs,
         sseThreshold: 1,
-        pointBudget: 3000000,
+        pointBudget: 3500000,
         material: {
-            maxAttenuatedSize: 7,
+            minAttenuatedSize: 2,
+            maxAttenuatedSize: 5,
             // @ts-ignore: added in 2.42
             shape: PNTS_SHAPE.SQUARE,
         },
     });
     view.addLayer(layer).then(onLayerReady);
-    // new PointCloudGUI(view, layer, { parent: gui } );
+    new PointCloudGUI(view, layer, {
+        title: layer.id,
+        parent: gui
+    });
 }
 
 const copcParams = uri.searchParams.get('copc');
